@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantacalcio Analyzer - Top 11 Rose</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: #1e293b; }
+        .drop-zone { border: 2px dashed #0284c7; padding: 30px; text-align: center; border-radius: 6px; background: #f0f9ff; cursor: pointer; margin-bottom: 20px; }
+        .drop-zone.hover { background: #e0f2fe; }
+        .file-list { margin: 10px 0; font-size: 0.9rem; color: #64748b; }
+        button { background: #0284c7; color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 4px; cursor: pointer; width: 100%; }
+        button:hover { background: #0369a1; }
+        .ranking-table, .details-section { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .ranking-table th, .ranking-table td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        .ranking-table th { background: #f8fafc; font-weight: 600; }
+        .ranking-table tr:nth-child(even) { background: #f8fafc; }
+        .rosa-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-top: 15px; }
+        .rosa-title { font-size: 1.2rem; font-weight: bold; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .badge { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Calcolatore Top 11 Rose Fantacalcio</h1>
+    <p>Trascina qui i tuoi file delle quotazioni (Portieri, Difensori, Centrocampisti, Attaccanti) e il file delle rose (<code>muyfantacalcio-league-rosters.csv</code>).</p>
+    
+    <div id="drop-zone" class="drop-zone">
+        Trascina qui i file CSV o clicca per selezionarli
+    </div>
+    <div id="file-list" class="file-list"></div>
+    
+    <button id="btn-process" style="display:none;">Elabora Dati</button>
+
+    <div id="output-area" style="display:none;">
+        <h2>Classifica Valore Top 11</h2>
+        <table class="ranking-table" id="ranking-table">
+            <thead>
+                <tr>
+                    <th>Posizione</th>
+                    <th>Fantasquadra</th>
+                    <th>Valore Top 11 (Qt.A)</th>
+                </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+        </table>
+
+        <h2>Dettaglio Rose (Top 11 Giocatori)</h2>
+        <div id="details-body"></div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileList = document.getElementById('file-list');
+    const btnProcess = document.getElementById('btn-process');
+    const outputArea = document.getElementById('output-area');
+    
+    let uploadedFiles = {};
+
+    dropZone.addEventListener('click', () => {
+        let input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = '.csv';
+        input.onchange = e => handleFiles(e.target.files);
+        input.click();
+    });
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('hover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('hover'); handleFiles(e.dataTransfer.files); });
+
+    function handleFiles(files) {
+        for (let file of files) {
+            uploadedFiles[file.name] = file;
+        }
+        fileList.innerHTML = '<strong>File pronti:</strong> ' + Object.keys(uploadedFiles).join(', ');
+        if (Object.keys(uploadedFiles).length >= 2) btnProcess.style.display = 'block';
+    }
+
+    function parseCSV(text, skipRows = 0) {
+        let lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        if (skipRows > 0) lines = lines.slice(skipRows);
+        return lines.map(line => {
+            // Gestione elementare dei campi con virgole
+            return line.split(',');
+        });
+    }
+
+    btnProcess.addEventListener('click', async () => {
+        let masterPlayers = {};
+        let leagueRosters = [];
+
+        for (let name in uploadedFiles) {
+            let text = await uploadedFiles[name].text();
+            if (name.includes('muyfantacalcio-league-rosters')) {
+                let rows = parseCSV(text, 0);
+                rows.forEach(r => {
+                    if (r[0] && r[0] !== '$' && r[1]) {
+                        leagueRosters.push({ rosa: r[0], id: r[1].trim() });
+                    }
+                });
+            } else if (name.includes('Quotazioni')) {
+                let rows = parseCSV(text, 2); // Salta intestazione del listone
+                rows.forEach(r => {
+                    if (r[0] && r[1] && r[3] && r[5]) {
+                        masterPlayers[r[0].trim()] = {
+                            id: r[0].trim(),
+                            ruolo: r[1].trim(),
+                            nome: r[3].trim(),
+                            squadra: r[4].trim(),
+                            qta: parseInt(r[5].trim()) || 0
+                        };
+                    }
+                });
+            }
+        }
+
+        // Accoppiamento dei dati
+        let roseMappa = {};
+        leagueRosters.forEach(p => {
+            let playerInfo = masterPlayers[p.id];
+            if (playerInfo) {
+                if (!roseMappa[p.rosa]) roseMappa[p.rosa] = [];
+                roseMappa[p.rosa].push(playerInfo);
+            }
+        });
+
+        // Calcolo Top 11
+        let classifica = [];
+        let dettagliDati = {};
+
+        for (let rosa in roseMappa) {
+            // Ordina i giocatori della rosa per quotazione decrescente
+            roseMappa[rosa].sort((a, b) => b.qta - a.qta);
+            let top11 = roseMappa[rosa].slice(0, 11);
+            let totale = top11.reduce((sum, p) => sum + p.qta, 0);
+            
+            classifica.push({ rosa: rosa, totale: totale });
+            dettagliDati[rosa] = top11;
+        }
+
+        classifica.sort((a, b) => b.totale - a.totale);
+
+        // Rendering Interfaccia
+        document.getElementById('ranking-body').innerHTML = classifica.map((c, index) => `
+            <tr>
+                <td>${index + 1}</td>
+                <td><strong>${c.rosa}</strong></td>
+                <td>${c.totale}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('details-body').innerHTML = classifica.map(c => `
+            <div class="rosa-card">
+                <div class="rosa-title">
+                    <span>${c.rosa}</span>
+                    <span class="badge">Totale Top 11: ${c.totale}</span>
+                </div>
+                <table width="100%" style="font-size:0.9rem;">
+                    ${dettagliDati[c.rosa].map(p => `
+                        <tr>
+                            <td width="10%"><strong>[${p.ruolo}]</strong></td>
+                            <td width="50%">${p.nome}</td>
+                            <td width="30%">${p.squadra}</td>
+                            <td width="10%" align="right"><strong>${p.qta}</strong></td>
+                        </tr>
+                    `).join('')}
+                </table>
+            </div>
+        `).join('');
+
+        outputArea.style.display = 'block';
+    });
+</script>
+</body>
+</html>
