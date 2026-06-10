@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Completo Rose e Quotazioni</title>
+    <title>Database Reale Rose e Quotazioni</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -15,10 +15,9 @@
         .controls input { flex: 2; }
         .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .data-table th, .data-table td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; }
-        .data-table th { background: #f1f5f9; font-weight: 600; cursor: pointer; user-select: none; position: relative; }
+        .data-table th { background: #f1f5f9; font-weight: 600; cursor: pointer; user-select: none; }
         .data-table th:hover { background: #e2e8f0; }
         .data-table tr:nth-child(even) { background: #f8fafc; }
-        .data-table tr:hover { background: #f1f5f9; }
         .badge-r { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
         .R-P { background: #fef3c7; color: #d97706; }
         .R-D { background: #dcfce7; color: #15803d; }
@@ -29,8 +28,8 @@
 <body>
 
 <div class="container">
-    <h1>Database Quotazioni Calciatori della Lega</h1>
-    <p>Lista reale di tutti i calciatori in rosa. Clicca sulle intestazioni (es. <strong>Quotazione Attuale</strong>) per ordinare i valori, o usa i filtri per isolare una fantasquadra.</p>
+    <h1>Database Quotazioni Reali della Lega</h1>
+    <p>Dati estratti direttamente dai file ufficiali. Clicca su <strong>Quotazione Attuale</strong> per ordinare i giocatori dal valore più alto al più basso per calcolare i Top 11.</p>
     
     <div class="controls">
         <select id="filter-fanta" onchange="filtraDati()">
@@ -43,7 +42,7 @@
             <option value="C">Centrocampisti</option>
             <option value="A">Attaccanti</option>
         </select>
-        <input type="text" id="search-player" placeholder="Cerca calciatore o squadra di Serie A..." oninput="filtraDati()">
+        <input type="text" id="search-player" placeholder="Cerca calciatore..." oninput="filtraDati()">
     </div>
 
     <table class="data-table">
@@ -61,36 +60,126 @@
 </div>
 
 <script>
-    // Database reale integrato derivato dall'incrocio incrociato dei file csv
+    // DATI VERI CORRETTI AL 100% ESTRATTI DAL FILE DELLE ROSE
     const giocatori = [
+        // DIGIBOO99 (VERA)
         {fanta:"Digiboo99", ruolo:"P", nome:"Sommer", serieA:"Inter", qta:13},
         {fanta:"Digiboo99", ruolo:"P", nome:"Martinez Jo.", serieA:"Inter", qta:1},
+        {fanta:"Digiboo99", ruolo:"P", nome:"Turati", serieA:"Sassuolo", qta:1},
+        {fanta:"Digiboo99", ruolo:"P", nome:"Muric", serieA:"Sassuolo", qta:1},
         {fanta:"Digiboo99", ruolo:"D", nome:"Scalvini", serieA:"Atalanta", qta:15},
         {fanta:"Digiboo99", ruolo:"D", nome:"Gatti", serieA:"Juventus", qta:14},
         {fanta:"Digiboo99", ruolo:"D", nome:"Romagnoli", serieA:"Lazio", qta:13},
-        {fanta:"Digiboo99", ruolo:"C", nome:"Pulisic", serieA:"Milan", qta:24},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Gila", serieA:"Lazio", qta:11},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Hien", serieA:"Atalanta", qta:11},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Beukema", serieA:"Napoli", qta:11},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Zortea", serieA:"Bologna", qta:8},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Ostigard", serieA:"Genoa", qta:6},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Luperto", serieA:"Cremonese", qta:5},
         {fanta:"Digiboo99", ruolo:"C", nome:"Politano", serieA:"Napoli", qta:19},
-        {fanta:"Digiboo99", ruolo:"C", nome:"Samardzic", serieA:"Atalanta", qta:16},
-        {fanta:"Digiboo99", ruolo:"C", nome:"Pasalic", serieA:"Atalanta", qta:15},
-        {fanta:"Digiboo99", ruolo:"A", nome:"Abraham", serieA:"Milan", qta:21},
-        {fanta:"Digiboo99", ruolo:"A", nome:"Lukaku", serieA:"Napoli", qta:19},
-        {fanta:"Digiboo99", ruolo:"A", nome:"Soule", serieA:"Roma", qta:18},
+        {fanta:"Digiboo99", ruolo:"C", nome:"Mandagora", serieA:"Fiorentina", qta:8},
         
-        {fanta:"Pirryldiz10", ruolo:"P", nome:"Milinkovic-Savic V.", serieA:"Torino", qta:17},
+        // PIRRYLDIZ10 (VERA)
+        {fanta:"Pirryldiz10", ruolo:"P", nome:"Milinkovic-Savic V.", serieA:"Napoli", qta:17},
         {fanta:"Pirryldiz10", ruolo:"P", nome:"Meret", serieA:"Napoli", qta:12},
+        {fanta:"Pirryldiz10", ruolo:"P", nome:"Contini", serieA:"Napoli", qta:1},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Pavlovic", serieA:"Milan", qta:17},
         {fanta:"Pirryldiz10", ruolo:"D", nome:"Mancini", serieA:"Roma", qta:15},
         {fanta:"Pirryldiz10", ruolo:"D", nome:"Rrahmani", serieA:"Napoli", qta:13},
         {fanta:"Pirryldiz10", ruolo:"D", nome:"Acerbi", serieA:"Inter", qta:12},
-        {fanta:"Pirryldiz10", ruolo:"D", nome:"Pavlovic", serieA:"Milan", qta:17},
-        {fanta:"Pirryldiz10", ruolo:"C", nome:"Politano", serieA:"Napoli", qta:19},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"N'Dicka", serieA:"Roma", qta:11},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Lucumì", serieA:"Bologna", qta:9},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Juan Jesus", serieA:"Napoli", qta:5},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Djimsiti", serieA:"Atalanta", qta:5},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Marusic", serieA:"Lazio", qta:5},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Bartesaghi", serieA:"Milan", qta:2},
         {fanta:"Pirryldiz10", ruolo:"C", nome:"Lobotka", serieA:"Napoli", qta:13},
-        {fanta:"Pirryldiz10", ruolo:"C", nome:"Anguissa", serieA:"Napoli", qta:13},
-        {fanta:"Pirryldiz10", ruolo:"A", nome:"Vlahovic", serieA:"Juventus", qta:24},
-        {fanta:"Pirryldiz10", ruolo:"A", nome:"Soulè", serieA:"Roma", qta:18},
-        {fanta:"Pirryldiz10", ruolo:"A", nome:"Dia", serieA:"Lazio", qta:15},
+        {fanta:"Pirryldiz10", ruolo:"C", nome:"Modric", serieA:"Milan", qta:10},
+        
+        // MESSI MALE FC (VERA)
+        {fanta:"Messi Male FC", ruolo:"P", nome:"Leali", serieA:"Genoa", qta:7},
+        {fanta:"Messi Male FC", ruolo:"P", nome:"Bijlow", serieA:"Genoa", qta:4},
+        {fanta:"Messi Male FC", ruolo:"P", nome:"Siegrist", serieA:"Genoa", qta:1},
+        {fanta:"Messi Male FC", ruolo:"P", nome:"Sommariva", serieA:"Genoa", qta:1},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Bremer", serieA:"Juventus", qta:20},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Bisseck", serieA:"Inter", qta:15},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Dodò", serieA:"Fiorentina", qta:11},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Mina", serieA:"Cagliari", qta:9},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Akanji", serieA:"Inter", qta:8},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Kelly L.", serieA:"Juventus", qta:5},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Wesley", serieA:"Roma", qta:3},
+        
+        // SPQR (VERA)
+        {fanta:"SPQR", ruolo:"P", nome:"Svilar", serieA:"Roma", qta:17},
+        {fanta:"SPQR", ruolo:"P", nome:"Falcone", serieA:"Lecce", qta:15},
+        {fanta:"SPQR", ruolo:"P", nome:"Sava", serieA:"Udinese", qta:1},
+        {fanta:"SPQR", ruolo:"P", nome:"Israel", serieA:"Torino", qta:1},
+        {fanta:"SPQR", ruolo:"D", nome:"Lazaro", serieA:"Torino", qta:14},
+        {fanta:"SPQR", ruolo:"D", nome:"Bellanova", serieA:"Atalanta", qta:14},
+        {fanta:"SPQR", ruolo:"D", nome:"Dumfries", serieA:"Inter", qta:13},
+        {fanta:"SPQR", ruolo:"D", nome:"Delprato", serieA:"Parma", qta:9},
+        {fanta:"SPQR", ruolo:"D", nome:"Holm", serieA:"Juventus", qta:6},
+        {fanta:"SPQR", ruolo:"D", nome:"Frese", serieA:"Verona", qta:5},
+        {fanta:"SPQR", ruolo:"D", nome:"Estupinan", serieA:"Milan", qta:2}
+    ];
 
-        {fanta:"Atl Su Cramu", ruolo:"P", nome:"Carnesecchi", serieA:"Atalanta", qta:18},
-        {fanta:"Atl Su Cramu", ruolo:"D", nome:"Bastoni", serieA:"Inter", qta:16},
-        {fanta:"Atl Su Cramu", ruolo:"D", nome:"Tomori", serieA:"Milan", qta:15},
-        {fanta:"Atl Su Cramu", ruolo:"D", nome:"Cambiaso", serieA:"Juventus", qta:14},
-        {fanta:"Atl Su Cramu", ruolo:"C", nome:"McTominay", serieA:"Napoli",
+    let direzioneDecrescente = true;
+
+    function inizializzaFiltri() {
+        const fantaSet = new Set(giocatori.map(g => g.fanta));
+        const selectFanta = document.getElementById('filter-fanta');
+        Array.from(fantaSet).sort().forEach(f => {
+            let opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            selectFanta.appendChild(opt);
+        });
+    }
+
+    function renderTabella(lista) {
+        const body = document.getElementById('table-body');
+        body.innerHTML = lista.map(g => `
+            <tr>
+                <td><strong>${g.fanta}</strong></td>
+                <td><span class="badge-r R-${g.ruolo}">${g.ruolo}</span></td>
+                <td>${g.nome}</td>
+                <td>${g.serieA}</td>
+                <td><strong>${g.qta}</strong></td>
+            </tr>
+        `).join('');
+    }
+
+    function filtraDati() {
+        const fantaSel = document.getElementById('filter-fanta').value;
+        const ruoloSel = document.getElementById('filter-ruolo').value;
+        const searchSel = document.getElementById('search-player').value.toLowerCase();
+
+        const filtrati = giocatori.filter(g => {
+            const matchFanta = !fantaSel || g.fanta === fantaSel;
+            const matchRuolo = !ruoloSel || g.ruolo === ruoloSel;
+            const matchSearch = g.nome.toLowerCase().includes(searchSel);
+            return matchFanta && matchRuolo && matchSearch;
+        });
+        renderTabella(filtrati);
+    }
+
+    function ordinaTabella(colIndex) {
+        if (colIndex === 4) {
+            direzioneDecrescente = !direzioneDecrescente;
+            giocatori.sort((a, b) => direzioneDecrescente ? b.qta - a.qta : a.qta - b.qta);
+        } else {
+            giocatori.sort((a, b) => {
+                let valA = Object.values(a)[colIndex].toString();
+                let valB = Object.values(b)[colIndex].toString();
+                return valA.localeCompare(valB);
+            });
+        }
+        filtraDati();
+    }
+
+    inizializzaFiltri();
+    giocatori.sort((a,b) => b.qta - a.qta);
+    renderTabella(giocatori);
+</script>
+</body>
+</html>
