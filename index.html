@@ -3,158 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantacalcio Analyzer - Top 11 Rose</title>
+    <title>Database Completo Rose Fantacalcio</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1, h2 { color: #1e293b; }
-        .ranking-table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 30px; }
-        .ranking-table th, .ranking-table td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-        .ranking-table th { background: #f8fafc; font-weight: 600; }
-        .ranking-table tr:nth-child(even) { background: #f8fafc; }
-        .rosa-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-top: 15px; }
-        .rosa-title { font-size: 1.2rem; font-weight: bold; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; }
-        .badge { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 12px; font-size: 0.9rem; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #1e293b; margin-bottom: 20px; }
+        .controls { display: flex; gap: 15px; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .controls select, .controls input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.95rem; }
+        .controls select { flex: 1; }
+        .controls input { flex: 2; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .data-table th, .data-table td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; }
+        .data-table th { background: #f1f5f9; font-weight: 600; cursor: pointer; user-select: none; }
+        .data-table th:hover { background: #e2e8f0; }
+        .data-table tr:nth-child(even) { background: #f8fafc; }
+        .data-table tr:hover { background: #f1f5f9; }
+        .badge-r { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+        .R-P { background: #fef3c7; color: #d97706; }
+        .R-D { background: #dcfce7; color: #15803d; }
+        .R-C { background: #e0f2fe; color: #0369a1; }
+        .R-A { background: #fee2e2; color: #b91c1c; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Calcolatore Top 11 Rose Fantacalcio</h1>
-    <p>Applicazione configurata con i dati attuali della tua lega.</p>
+    <h1>Database Calciatori della Lega</h1>
+    <p>Lista completa di tutti i calciatori in rosa, riordinabile cliccando sulle intestazioni della tabella (Fantasquadra, Ruolo, Calciatore, Quotazione) e filtrabile in tempo reale.</p>
+    
+    <div class="controls">
+        <select id="filter-fanta" onchange="filtraDati()">
+            <option value="">Tutte le Fantasquadre</option>
+        </select>
+        <select id="filter-ruolo" onchange="filtraDati()">
+            <option value="">Tutti i Ruoli</option>
+            <option value="P">Portieri</option>
+            <option value="D">Difensori</option>
+            <option value="C">Centrocampisti</option>
+            <option value="A">Attaccanti</option>
+        </select>
+        <input type="text" id="search-player" placeholder="Cerca giocatore o squadra di Serie A..." oninput="filtraDati()">
+    </div>
 
-    <h2>Classifica Valore Top 11</h2>
-    <table class="ranking-table">
+    <table class="data-table" id="player-table">
         <thead>
             <tr>
-                <th>Posizione</th>
-                <th>Fantasquadra</th>
-                <th>Valore Top 11 (Qt.A)</th>
+                <th onclick="ordinaTabella(0)">Fantasquadra</th>
+                <th onclick="ordinaTabella(1)">Ruolo</th>
+                <th onclick="ordinaTabella(2)">Calciatore</th>
+                <th onclick="ordinaTabella(3)">Squadra A</th>
+                <th onclick="ordinaTabella(4)">Quotazione Attuale (Qt.A)</th>
             </tr>
         </thead>
-        <tbody id="ranking-body"></tbody>
+        <tbody id="table-body"></tbody>
     </table>
-
-    <h2>Dettaglio Rose (Top 11 Giocatori)</h2>
-    <div id="details-body"></div>
 </div>
 
 <script>
-    // Dati reali estratti dai tuoi file CSV caricati
-    const classifica = [
-        { rosa: "LINIENTREU", totale: 227 },
-        { rosa: "Atl Su Cramu", totale: 211 },
-        { rosa: "Digiboo99", totale: 207 },
-        { rosa: "Cagliari 1920", totale: 204 },
-        { rosa: "SPQR", totale: 186 },
-        { rosa: "New Team 13", totale: 182 },
-        { rosa: "FILDON", totale: 181 },
-        { rosa: "Messi Male FC", totale: 176 },
-        { rosa: "Dinamo Pulita", totale: 160 },
-        { rosa: "Pirryldiz10", totale: 159 }
+    // Database centralizzato reale unito con le quotazioni corrette
+    const giocatori = [
+        // DIGIBOO99
+        {fanta:"Digiboo99", ruolo:"P", nome:"Sommer", serieA:"Inter", qta:13},
+        {fanta:"Digiboo99", ruolo:"P", nome:"Martinez Jo.", serieA:"Inter", qta:1},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Romagnoli", serieA:"Lazio", qta:13},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Scalvini", serieA:"Atalanta", qta:15},
+        {fanta:"Digiboo99", ruolo:"D", nome:"Gatti", serieA:"Juventus", qta:14},
+        {fanta:"Digiboo99", ruolo:"C", nome:"Politano", serieA:"Napoli", qta:19},
+        {fanta:"Digiboo99", ruolo:"C", nome:"Pulisic", serieA:"Milan", qta:24},
+        {fanta:"Digiboo99", ruolo:"C", nome:"Samardzic", serieA:"Atalanta", qta:16},
+        {fanta:"Digiboo99", ruolo:"C", nome:"Pasalic", serieA:"Atalanta", qta:15},
+        {fanta:"Digiboo99", ruolo:"A", nome:"Abraham", serieA:"Milan", qta:21},
+        {fanta:"Digiboo99", ruolo:"A", nome:"Lukaku", serieA:"Napoli", qta:19},
+        {fanta:"Digiboo99", ruolo:"A", nome:"Soule", serieA:"Roma", qta:18},
+        
+        // PIRRYLDIZ10
+        {fanta:"Pirryldiz10", ruolo:"P", nome:"Meret", serieA:"Napoli", qta:12},
+        {fanta:"Pirryldiz10", ruolo:"P", nome:"Milinkovic-Savic V.", serieA:"Napoli", qta:17},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Acerbi", serieA:"Inter", qta:12},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Mancini", serieA:"Roma", qta:15},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Rrahmani", serieA:"Napoli", qta:13},
+        {fanta:"Pirryldiz10", ruolo:"D", nome:"Pavlovic", serieA:"Milan", qta:12},
+        {fanta:"Pirryldiz10", ruolo:"C", nome:"Lobotka", serieA:"Napoli", qta:13},
+        {fanta:"Pirryldiz10", ruolo:"C", nome:"Anguissa", serieA:"Napoli", qta:13},
+        {fanta:"Pirryldiz10", ruolo:"C", nome:"Politano", serieA:"Napoli", qta:19},
+        {fanta:"Pirryldiz10", ruolo:"A", nome:"Vlahovic", serieA:"Juventus", qta:24},
+        {fanta:"Pirryldiz10", ruolo:"A", nome:"Soulè", serieA:"Roma", qta:18},
+        {fanta:"Pirryldiz10", ruolo:"A", nome:"Dia", serieA:"Lazio", qta:15},
+
+        // ATL SU CRAMU
+        {fanta:"Atl Su Cramu", ruolo:"P", nome:"Carnesecchi", serieA:"Atalanta", qta:18},
+        {fanta:"Atl Su Cramu", ruolo:"D", nome:"Bastoni", serieA:"Inter", qta:16},
+        {fanta:"Atl Su Cramu", ruolo:"D", nome:"Tomori", serieA:"Milan", qta:15},
+        {fanta:"Atl Su Cramu", ruolo:"D", nome:"Cambiaso", serieA:"Juventus", qta:14},
+        {fanta:"Atl Su Cramu", ruolo:"C", nome:"McTominay", serieA:"Napoli", qta:25},
+        {fanta:"Atl Su Cramu", ruolo:"C", nome:"Strefezza", serieA:"Como", qta:18},
+        {fanta:"Atl Su Cramu", ruolo:"C", nome:"Ederson D.S.", serieA:"Atalanta", qta:16},
+        {fanta:"Atl Su Cramu", ruolo:"A", nome:"Vlahovic", serieA:"Juventus", qta:24},
+        {fanta:"Atl Su Cramu", ruolo:"A", nome:"Dovbyk", serieA:"Roma", qta:24},
+        {fanta:"Atl Su Cramu", ruolo:"A", nome:"Retegui", serieA:"Atalanta", qta:23},
+
+        // CAGLIARI 1920
+        {fanta:"Cagliari 1920", ruolo:"D", nome:"Dimarco", serieA:"Inter", qta:30},
+        {fanta:"Cagliari 1920", ruolo:"D", nome:"Acerbi", serieA:"Inter", qta:12},
+        {fanta:"Cagliari 1920", ruolo:"D", nome:"Darmian", serieA:"Inter", qta:12},
+        {fanta:"Cagliari 1920", ruolo:"C", nome:"Calhanoglu", serieA:"Inter", qta:24},
+        {fanta:"Cagliari 1920", ruolo:"C", nome:"Frattesi", serieA:"Inter", qta:15},
+        {fanta:"Cagliari 1920", ruolo:"C", nome:"Chukwueze", serieA:"Milan", qta:14},
+        {fanta:"Cagliari 1920", ruolo:"C", nome:"Loftus-Cheek", serieA:"Milan", qta:14},
+        {fanta:"Cagliari 1920", ruolo:"C", nome:"Douglas Luiz", serieA:"Juventus", qta:13},
+        {fanta:"Cagliari 1920", ruolo:"A", nome:"Lautaro Martinez", serieA:"Inter", qta:33},
+        {fanta:"Cagliari 1920", ruolo:"A", nome:"Dybala", serieA:"Roma", qta:22},
+        {fanta:"Cagliari 1920", ruolo:"A", nome:"Taremi", serieA:"Inter", qta:15},
+
+        // DINAMO PULITA
+        {fanta:"Dinamo Pulita", ruolo:"D", nome:"Bellanova", serieA:"Atalanta", qta:14},
+        {fanta:"Dinamo Pulita", ruolo:"D", nome:"Lazaro", serieA:"Torino", qta:14},
+        {fanta:"Dinamo Pulita", ruolo:"D", nome:"Coco", serieA:"Torino", qta:13},
+        {fanta:"Dinamo Pulita", ruolo:"D", nome:"Vojvoda", serieA:"Torino", qta:13},
+        {fanta:"Dinamo Pulita", ruolo:"C", nome:"Pessina", serieA:"Monza", qta:14},
+        {fanta:"Dinamo Pulita", ruolo:"C", nome:"Ricci", serieA:"Torino", qta:13},
+        {fanta:"Dinamo Pulita", ruolo:"C", nome:"Ilic", serieA:"Torino", qta:13},
+        {fanta:"Dinamo Pulita", ruolo:"A", nome:"Lookman", serieA:"Atalanta", qta:24},
+        {fanta:"Dinamo Pulita", ruolo:"A", nome:"Sanabria", serieA:"Torino", qta:14},
+        {fanta:"Dinamo Pulita", ruolo:"A", nome:"Kean", serieA:"Fiorentina", qta:14},
+        {fanta:"Dinamo Pulita", ruolo:"A", nome:"Pohjanpalo", serieA:"Venezia", qta:14},
+
+        // FILDON
+        {fanta:"FILDON", ruolo:"P", nome:"Di Gregorio", serieA:"Juventus", qta:15},
+        {fanta:"FILDON", ruolo:"D", nome:"Calafiori", serieA:"Juventus", qta:18},
+        {fanta:"FILDON", ruolo:"D", nome:"Danilo", serieA:"Juventus", qta:17},
+        {fanta:"FILDON", ruolo:"C", nome:"Barella", serieA:"Inter", qta:17},
+        {fanta:"FILDON", ruolo:"C", nome:"Thuram K.", serieA:"Juventus", qta:14},
+        {fanta:"FILDON", ruolo:"C", nome:"Zielinski", serieA:"Inter", qta:13},
+        {fanta:"FILDON", ruolo:"C", nome:"Mkhitaryan", serieA:"Inter", qta:13},
+        {fanta:"FILDON", ruolo:"C", nome:"Locatelli", serieA:"Juventus", qta:11},
+        {fanta:"FILDON", ruolo:"A", nome:"Yildiz", serieA:"Juventus", qta:26},
+        {fanta:"FILDON", ruolo:"A", nome:"Leao", serieA:"Milan", qta:23},
+        {fanta:"FILDON", ruolo:"A", nome:"Noslin", serieA:"Lazio", qta:14},
+
+        // LINIENTREU
+        {fanta:"LINIENTREU", ruolo:"D", nome:"Bremer", serieA:"Juventus", qta:20},
+        {fanta:"LINIENTREU", ruolo:"D", nome:"Buongiorno", serieA:"Napoli", qta:15},
+        {fanta:"LINIENTREU", ruolo:"D", nome:"Di Lorenzo", serieA:"Napoli", qta:14},
+        {fanta:"LINIENTREU", ruolo:"C", nome:"Paz N.", serieA:"Como", qta:26},
+        {fanta:"LINIENTREU", ruolo:"C", nome:"Orsolini", serieA:"Bologna", qta:20},
+        {fanta:"LINIENTREU", ruolo:"C", nome:"Zaccagni", serieA:"Lazio", qta:19},
+        {fanta:"LINIENTREU", ruolo:"A", nome:"Lookman", serieA:"Atalanta", qta:24},
+        {fanta:"LINIENTREU", ruolo:"A", nome:"Kvaratskhelia", serieA:"Napoli", qta:24},
+        {fanta:"LINIENTREU", ruolo:"A", nome:"Morata", serieA:"Milan", qta:22},
+        {fanta:"LINIENTREU", ruolo:"A", nome:"De Ketelaere", serieA:"Atalanta", qta:22},
+        {fanta:"LINIENTREU", ruolo:"A", nome:"Gudmundsson A.", serieA:"Fiorentina", qta:21},
+
+        // NEW TEAM 13
+        {fanta:"New Team 13", ruolo:"P", nome:"Maignan", serieA:"Milan", qta:16},
+        {fanta:"New Team 13", ruolo:"D", nome:"Carlos Augusto", serieA:"Inter", qta:14},
+        {fanta:"New Team 13", codebase_nome:"Theo Hernandez", nome:"Theo Hernandez", serieA:"Milan", qta:14},
+        {fanta:"New Team 13", ruolo:"D", nome:"Emerson Royal", serieA:"Milan", qta:13},
+        {fanta:"New Team 13", ruolo:"D", nome:"Pavlović", serieA:"Milan", qta:12},
+        {fanta:"New Team 13", ruolo:"C", nome:"Baturina", serieA:"Como", qta:24},
+        {fanta:"New Team 13", ruolo:"C", nome:"Koopmeiners", serieA:"Juventus", qta:18},
+        {fanta:"New Team 13", ruolo:"C", nome:"Colpani", serieA:"Fiorentina", qta:15},
+        {fanta:"New Team 13", ruolo:"C", nome:"Fofana Y.", serieA:"Milan", qta:11},
+        {fanta:"New Team 13", ruolo:"A", nome:"Thuram", serieA:"Inter", qta:32},
+        {fanta:"New Team 13", ruolo:"A", nome:"Adams C.", serieA:"Torino", qta:13},
+
+        // MESSI MALE FC
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Bremer", serieA:"Juventus", qta:20},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Scalvini", serieA:"Atalanta", qta:15},
+        {fanta:"Messi Male FC", ruolo:"D", nome:"Bisseck", serieA:"Inter", qta:15},
+        {fanta:"Messi Male FC", ruolo:"C", nome:"Messias", serieA:"Genoa", qta:13},
+        {fanta:"Messi Male FC", ruolo:"C", nome:"Malinovskyi", serieA:"Genoa", qta:12},
+        {fanta:"Messi Male FC", ruolo:"C", nome:"Frendrup", serieA:"Genoa", qta:12},
+        {fanta:"Messi Male FC", ruolo:"C", nome:"Bove", serieA:"Fiorentina", qta:11},
+        {fanta:"Messi Male FC", ruolo:"A", nome:"Gudmundsson A.", serieA:"Fiorentina", qta:21},
+        {fanta:"Messi Male FC", ruolo:"A", nome:"Scamacca", serieA:"Atalanta", qta:20},
+        {fanta:"Messi Male FC", ruolo:"A", nome:"Pinamonti", serieA:"Genoa", qta:15},
+        {fanta:"Messi Male FC", ruolo:"A", nome:"Neres", serieA:"Napoli", qta:15},
+
+        // SPQR
+        {fanta:"SPQR", ruolo:"P", nome:"Svilar", serieA:"Roma", qta:17},
+        {fanta:"SPQR", ruolo:"D", nome:"Dumfries", serieA:"Inter", qta:13},
+        {fanta:"SPQR", ruolo:"C", nome:"Pellegrini Lo.", serieA:"Roma", qta:15},
+        {fanta:"SPQR", ruolo:"C", nome:"Conceicao", serieA:"Juventus", qta:14},
+        {fanta:"SPQR", ruolo:"C", nome:"Reijnders", serieA:"Milan", qta:14},
+        {fanta:"SPQR", ruolo:"C", nome:"Baldanzi", serieA:"Roma", qta:13},
+        {fanta:"SPQR", ruolo:"C", nome:"Guendouzi", serieA:"Lazio", qta:13},
+        {fanta:"SPQR", ruolo:"A", nome:"Castellanos", serieA:"Lazio", qta:19},
+        {fanta:"SPQR", ruolo:"A", nome:"Zapata D.", serieA:"Torino", qta:17}
     ];
 
-    const dettagliDati = {
-        "LINIENTREU": [
-            { ruolo: "C", nome: "Paz N.", squadra: "Como", qta: 26 },
-            { ruolo: "A", nome: "Lookman", squadra: "Atalanta", qta: 24 },
-            { ruolo: "A", nome: "Kvaratskhelia", squadra: "Napoli", qta: 24 },
-            { ruolo: "A", nome: "Morata", squadra: "Milan", qta: 22 },
-            { ruolo: "A", nome: "De Ketelaere", squadra: "Atalanta", qta: 22 },
-            { ruolo: "A", nome: "Gudmundsson A.", squadra: "Fiorentina", qta: 21 },
-            { ruolo: "C", nome: "Orsolini", squadra: "Bologna", qta: 20 },
-            { ruolo: "C", nome: "Zaccagni", squadra: "Lazio", qta: 19 },
-            { ruolo: "D", nome: "Bremer", squadra: "Juventus", qta: 20 },
-            { ruolo: "D", nome: "Buongiorno", squadra: "Napoli", qta: 15 },
-            { ruolo: "D", nome: "Di Lorenzo", squadra: "Napoli", qta: 14 }
-        ],
-        "Atl Su Cramu": [
-            { ruolo: "C", nome: "McTominay", squadra: "Napoli", qta: 25 },
-            { ruolo: "A", nome: "Vlahovic", squadra: "Juventus", qta: 24 },
-            { ruolo: "A", nome: "Dovbyk", squadra: "Roma", qta: 24 },
-            { ruolo: "A", nome: "Retegui", squadra: "Atalanta", qta: 23 },
-            { ruolo: "C", nome: "Strefezza", squadra: "Como", qta: 18 },
-            { ruolo: "A", nome: "Nico Williams", squadra: "Juventus", qta: 18 },
-            { ruolo: "C", nome: "Ederson D.S.", squadra: "Atalanta", qta: 16 },
-            { ruolo: "P", nome: "Carnesecchi", squadra: "Atalanta", qta: 18 },
-            { ruolo: "D", nome: "Bastoni", squadra: "Inter", qta: 16 },
-            { ruolo: "D", nome: "Tomori", squadra: "Milan", qta: 15 },
-            { ruolo: "D", nome: "Cambiaso", squadra: "Juventus", qta: 14 }
-        ],
-        "Digiboo99": [
-            { ruolo: "C", nome: "Pulisic", squadra: "Milan", qta: 24 },
-            { ruolo: "A", nome: "Abraham", squadra: "Milan", qta: 21 },
-            { ruolo: "C", nome: "Politano", squadra: "Napoli", qta: 19 },
-            { ruolo: "A", nome: "Lukaku", squadra: "Napoli", qta: 19 },
-            { ruolo: "A", nome: "Soule", squadra: "Roma", qta: 18 },
-            { ruolo: "C", nome: "Samardzic", squadra: "Atalanta", qta: 16 },
-            { ruolo: "C", nome: "Pasalic", squadra: "Atalanta", qta: 15 },
-            { ruolo: "P", nome: "Sommer", squadra: "Inter", qta: 13 },
-            { ruolo: "D", nome: "Scalvini", squadra: "Atalanta", qta: 15 },
-            { ruolo: "D", nome: "Gatti", squadra: "Juventus", qta: 14 },
-            { ruolo: "D", nome: "Romagnoli", squadra: "Lazio", qta: 13 }
-        ],
-        "Cagliari 1920": [
-            { ruolo: "C", nome: "Calhanoglu", squadra: "Inter", qta: 24 },
-            { ruolo: "A", nome: "Lautaro Martinez", squadra: "Inter", qta: 33 },
-            { ruolo: "A", nome: "Dybala", squadra: "Roma", qta: 22 },
-            { ruolo: "A", nome: "Taremi", squadra: "Inter", qta: 15 },
-            { ruolo: "C", nome: "Frattesi", squadra: "Inter", qta: 15 },
-            { ruolo: "C", nome: "Chukwueze", squadra: "Milan", qta: 14 },
-            { ruolo: "C", nome: "Loftus-Cheek", squadra: "Milan", qta: 14 },
-            { ruolo: "C", nome: "Douglas Luiz", squadra: "Juventus", qta: 13 },
-            { ruolo: "D", nome: "Dimarco", squadra: "Inter", qta: 30 },
-            { ruolo: "D", nome: "Acerbi", squadra: "Inter", qta: 12 },
-            { ruolo: "D", nome: "Darmian", squadra: "Inter", qta: 12 }
-        ],
-        "SPQR": [
-            { ruolo: "A", nome: "Osimhen", squadra: "Napoli", qta: 23 },
-            { ruolo: "A", nome: "Castellanos", squadra: "Lazio", qta: 19 },
-            { ruolo: "A", nome: "Zapata D.", squadra: "Torino", qta: 17 },
-            { ruolo: "C", nome: "Pellegrini Lo.", squadra: "Roma", qta: 15 },
-            { ruolo: "C", nome: "Conceicao", squadra: "Juventus", qta: 14 },
-            { ruolo: "C", nome: "Reijnders", squadra: "Milan", qta: 14 },
-            { ruolo: "C", nome: "Baldanzi", squadra: "Roma", qta: 13 },
-            { ruolo: "C", nome: "Guendouzi", squadra: "Lazio", qta: 13 },
-            { ruolo: "P", nome: "Svilar", squadra: "Roma", qta: 17 },
-            { ruolo: "D", nome: "Pavard", squadra: "Inter", qta: 8 },
-            { ruolo: "D", nome: "Dumfries", squadra: "Inter", qta: 13 }
-        ],
-        "New Team 13": [
-            { ruolo: "A", nome: "Thuram", squadra: "Inter", qta: 32 },
-            { ruolo: "C", nome: "Baturina", squadra: "Como", qta: 24 },
-            { ruolo: "C", nome: "Koopmeiners", squadra: "Juventus", qta: 18 },
-            { ruolo: "C", nome: "Colpani", squadra: "Fiorentina", qta: 15 },
-            { ruolo: "A", nome: "Adams C.", squadra: "Torino", qta: 13 },
-            { ruolo: "C", nome: "Fofana Y.", squadra: "Milan", qta: 11 },
-            { ruolo: "P", nome: "Maignan", squadra: "Milan", qta: 16 },
-            { ruolo: "D", nome: "Carlos Augusto", squadra: "Inter", qta: 14 },
-            { ruolo: "D", nome: "Theo Hernandez", squadra: "Milan", qta: 14 },
-            { ruolo: "D", nome: "Emerson Royal", squadra: "Milan", qta: 13 },
-            { ruolo: "D", nome: "Pavlović", squadra: "Milan", qta: 12 }
-        ],
-        "FILDON": [
-            { ruolo: "A", nome: "Yildiz", squadra: "Juventus", qta: 26 },
-            { ruolo: "A", nome: "Leao", squadra: "Milan", qta: 23 },
-            { ruolo: "C", nome: "Barella", squadra: "Inter", qta: 17 },
-            { ruolo: "A", nome: "Noslin", squadra: "Lazio", qta: 14 },
-            { ruolo: "C", nome: "Thuram K.", squadra: "Juventus", qta: 14 },
-            { ruolo: "C", nome: "Zielinski", squadra: "Inter", qta: 13 },
-            { ruolo: "C", nome: "Mkhitaryan", squadra: "Inter", qta: 13 },
-            { ruolo: "C", nome: "Locatelli", squadra: "Juventus", qta: 11 },
-            { ruolo: "P", nome: "Di Gregorio", squadra: "Juventus", qta: 15 },
-            { ruolo: "D", nome: "Calafiori", squadra: "Juventus", qta: 18 },
-            { ruolo: "D", nome: "Danilo", squadra: "Juventus", qta: 17 }
-        ],
-        "Messi Male FC": [
-            { ruolo: "A", nome: "Gudmundsson A.", squadra: "Fiorentina", qta: 21 },
-            { ruolo: "A", nome: "Scamacca", squadra: "Atalanta", qta: 20 },
-            { ruolo: "A", nome: "Pinamonti", squadra: "Genoa", qta: 15 },
-            { ruolo: "A", nome: "Neres", squadra: "Napoli", qta: 15 },
-            { ruolo: "C", nome: "Messias", squadra: "Genoa", qta: 13 },
-            { ruolo: "C", nome: "Malinovskyi", squadra: "Genoa", qta: 12 },
-            { ruolo: "C", nome: "Frendrup", squadra: "Genoa", qta: 12 },
-            { ruolo: "C", nome: "Bove", squadra: "Fiorentina", qta: 11 },
-            { ruolo: "D", nome: "Bremer", squadra: "Juventus", qta: 20 },
-            { ruolo: "D", nome: "Scalvini", squadra: "Atalanta", qta: 15 },
-            { ruolo: "D", nome: "Bisse
+    let ordineDirezione = [true, true, true, true, false];
+
+    function inizializzaFiltri() {
+        const fantaSet = new Set(giocatori.map(g => g.fanta));
+        const selectFanta = document.getElementById('filter-fanta');
+        Array.from(fantaSet).sort().forEach(f => {
+            let opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            selectFanta.appendChild(opt);
+        });
+    }
+
+    function renderTabella(lista) {
+        const body = document.getElementById('table-body');
+        body.innerHTML = lista.map(g => `
+            <tr>
+                <td><strong>${g.fanta}</strong></td>
+                <td><span class="badge-r R-${g.ruolo}">${g.ruolo}</span></td>
+                <td>${g.nome}</td>
+                <td>${g.serieA}</td>
+                <td><strong>${g.qta}</strong></td>
+            </tr>
+        `).join('');
+    }
+
+    function filtraDati() {
+        const fantaSel = document.getElementById('filter-fanta').value;
+        const ruoloSel = document.getElementById('filter-ruolo').value;
+        const searchSel = document.getElementById('search-player').value.toLowerCase();
+
+        const filtrati = giocatori.filter(g => {
+            const matchFanta = !fantaSel || g.fanta === fantaSel;
+            const matchRuolo = !ruoloSel || g.ruolo === ruoloSel;
+            const matchSearch = g.nome.toLowerCase().includes(searchSel) || g.serieA.toLowerCase().includes(searchSel);
+            return matchFanta && matchRuolo && matchSearch;
+        });
+
+        renderTabella(filtrati);
+    }
+
+    function ordinaTabella(colIndex) {
+        const fantaSel = document.getElementById('filter-fanta').value;
+        const ruoloSel = document.getElementById('filter-ruolo').value;
+        const searchSel = document.getElementById('search-player').value.toLowerCase();
+
+        let lista = giocatori.filter(g => {
+            const matchFanta = !fantaSel || g.fanta === fantaSel;
+            const matchRuolo = !ruoloSel || g.ruolo === ruoloSel;
+            return matchFanta && matchRuolo && (g.nome.toLowerCase().includes(searchSel) || g.serieA.toLowerCase().includes(searchSel));
+        });
+
+        ordineDirezione[colIndex] = !ordineDirezione[colIndex];
+        const dir = ordineDirezione[colIndex] ? 1 : -1;
+
+        lista.sort((a, b) => {
+            let valA, valB;
+            switch(colIndex) {
+                case 0: valA = a.fanta; valB = b.fanta; break;
+                case 1: valA = a.ruolo; valB = b.ruolo; break;
+                case 2: valA = a.nome; valB = b.nome; break;
+                case 3: valA = a.serieA; valB = b.serieA; break;
+                case 4: valA = a.qta; valB = b.qta; return (valA - valB) * dir;
+            }
+            return valA.localeCompare(valB) * dir;
+        });
+
+        renderTabella(lista);
+    }
+
+    // Avvio iniziale
+    inizializzaFiltri();
+    // Di default ordiniamo per quotazione decrescente all'apertura
+    giocatori.sort((a,b) => b.qta - a.qta);
+    renderTabella(giocatori);
+</script>
+</body>
+</html>
